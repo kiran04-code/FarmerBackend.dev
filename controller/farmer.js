@@ -52,15 +52,29 @@ export const UserAuth = async (req, res) => {
 }
 
 
-export const Login = (req,res)=>{
-try {
-     const data = req.body
- console.log(data)
- res.json({
-    success:true,
-    message:"Your Login SucessFully"
- })
-} catch (error) {
-    console.log(error)
-}
+export const Login = async (req, res) => {
+    try {
+        const { id } = req.body
+        const data = await farmer.findOne({ CollectorId: id })
+        if (data) {
+            const token = await createToken(data)
+            res.json({
+                success: true,
+                token: token,
+                message: "Login SucessFully"
+            })
+        } else {
+            res.json({
+                success: false,
+                message: "InCorrect FarmerId"
+            })
+        }
+
+    } catch (error) {
+        console.log(error)
+        res.json({
+            success: false,
+            message: "Server Error"
+        })
+    }
 }
