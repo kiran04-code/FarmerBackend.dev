@@ -3,6 +3,7 @@ import farmer from "../model/User.js";
 import { getrandomId } from "../utils/randomID.js";
 
 export const createAccount = async (req, res) => {
+    console.log(req.body)
     try {
         const { name, number, location } = req.body;
         const farmerExist = await farmer.findOne({ FarmerNumber: number })
@@ -22,7 +23,6 @@ export const createAccount = async (req, res) => {
                 }
             })
             const token = await createToken(farmerMan)
-            console.log(farmerMan)
             res.json({ success: true, msg: "Account created successfully", tokens: token });
         } else {
             res.json({ success: false, msg: "This Number is Alredy Exist" });
@@ -54,19 +54,20 @@ export const UserAuth = async (req, res) => {
 
 export const Login = async (req, res) => {
     try {
-        const { id } = req.body
-        const data = await farmer.findOne({ CollectorId: id })
+        const  {Id} = req.body
+        const data = await farmer.findOne({ CollectorId: Id })
         if (data) {
             const token = await createToken(data)
             res.json({
                 success: true,
-                token: token,
-                message: "Login SucessFully"
+                tokens: token,
+                datas:data,
+                msg: "Login SucessFully"
             })
         } else {
             res.json({
                 success: false,
-                message: "InCorrect FarmerId"
+                msg: "InCorrect FarmerId"
             })
         }
 

@@ -32,7 +32,7 @@ dbConnection(process.env.MONGOBD_ULI).then(()=>{
 })
 // Routes
 app.use("/api",farmerRoutes)
-app.listen(PORT,(req,res)=>{
+app.listen(PORT,'0.0.0.0',(req,res)=>{
     console.log(`Local Server is Runing on Port:http://localhost:${PORT}`)
     console.log(`Live Server run :${ process.env.DEPLOYED_URL}`)
 })
