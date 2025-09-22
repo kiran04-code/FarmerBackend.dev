@@ -29,7 +29,8 @@ export const createAccount = async (req, res) => {
         }
 
     } catch (error) {
-        res.json({ success: false, msg: "Server Error" ,err:error});
+         console.error("CreateAccount Error:", error);  // <-- log in Render logs
+    res.json({ success: false, msg: "Server Error" });
     }
 }
 

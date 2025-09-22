@@ -6,10 +6,7 @@ import { farmerRoutes } from "./routes/farmer.js";
 config();
 const app = express()
 const PORT = process.env.LOCAL_PORT || 8081;
-app.use(cors({
-    origin:true,
-    credentials:true
-}));
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 // server check  Routes
