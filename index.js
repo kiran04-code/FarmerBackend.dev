@@ -7,7 +7,7 @@ config();
 const app = express()
 const PORT = process.env.LOCAL_PORT || 8081;
 app.use(cors({
-    origin:"http://localhost:8081",
+    origin:true,
     credentials:true
 }));
 app.use(express.json());
