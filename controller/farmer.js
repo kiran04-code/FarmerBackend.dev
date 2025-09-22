@@ -29,6 +29,7 @@ export const createAccount = async (req, res) => {
         }
 
     } catch (error) {
+        console.log(error)
         res.json({ success: false, msg: "Server Error" });
     }
 }
