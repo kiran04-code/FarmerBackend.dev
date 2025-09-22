@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const FarmerSchema = new mongoose.Schema({
+    CollectorId: {
+        type: String,
+        require: true,
+    },
     nameOfFarmer: {
         type: String,
         require: true,
@@ -25,6 +29,9 @@ const FarmerSchema = new mongoose.Schema({
         postcode: {
             type: String,
         },
+        city: {
+            type: String
+        }
     },
 
 })
