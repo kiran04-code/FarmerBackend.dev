@@ -1,9 +1,9 @@
 import { createToken, getvalidData } from "../auth/user.js";
 import farmer from "../model/User.js";
+import { farmerRoutes } from "../routes/farmer.js";
 import { getrandomId } from "../utils/randomID.js";
-
+import axios from "axios"
 export const createAccount = async (req, res) => {
-    console.log(req.body)
     try {
         const { name, number, location } = req.body;
         const farmerExist = await farmer.findOne({ FarmerNumber: number })
@@ -80,3 +80,54 @@ export const Login = async (req, res) => {
         })
     }
 }
+
+
+
+export const fetchProducts = async (req, res) => {
+  const { farmerId } = req.params; // or req.params if using URL param
+  console.log(farmerId)
+  try {
+  const metadataFilter = farmerId
+  ? {
+      type: { value: "product", op: "eq" },
+      farmerId: { value: farmerId, op: "eq" },
+    }
+  : {
+      type: { value: "product", op: "eq" },
+    };
+    const response = await axios.get(
+      `https://api.pinata.cloud/data/pinList?status=pinned&limit=100&metadata[keyvalues]=${encodeURIComponent(
+        JSON.stringify(metadataFilter)
+      )}`,
+      {
+        headers: {
+          pinata_api_key: "9ee892bfc12b953147be",
+          pinata_secret_api_key: "c85fc4ba88949c3302c358f04734f9b51b2c971f1de682e0f90304eb6a8a01d3",
+        },
+      }
+    );
+
+    const pinnedJSONs = response.data.rows;
+
+    // Fetch actual JSON content from IPFS
+    const products = await Promise.all(
+      pinnedJSONs.map(async (item) => {
+        try {
+          const { data } = await axios.get(
+            `https://emerald-lazy-moose-425.mypinata.cloud/ipfs/${item.ipfs_pin_hash}`
+          );
+          return { ...data, ipfsHash: item.ipfs_pin_hash };
+        } catch (err) {
+          console.log("Error fetching IPFS JSON:", err.message);
+          return null;
+        }
+      })
+    );
+
+    // Send only valid products
+    res.json(products.filter(Boolean));
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
+};
