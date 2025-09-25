@@ -131,3 +131,57 @@ export const fetchProducts = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch products" });
   }
 };
+
+
+
+
+export const allproductes = async (req, res) => {
+  try {
+    const response = await axios.get(
+      'https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={"value":"product","op":"eq"}',
+      {
+        headers: {
+          pinata_api_key: "9ee892bfc12b953147be",
+          pinata_secret_api_key: "c85fc4ba88949c3302c358f04734f9b51b2c971f1de682e0f90304eb6a8a01d3",
+        },
+      }
+    );
+
+    const pinnedJSONs = response.data.rows;
+
+    const products = await Promise.all(
+      pinnedJSONs.map(async (item) => {
+        try {
+          const { data } = await axios.get(
+            `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`
+          );
+          return { ...data, ipfsHash: item.ipfs_pin_hash };
+        } catch (err) {
+          console.log("Error fetching IPFS JSON:", err.message);
+          return null;
+        }
+      })
+    );
+
+    res.json(products.filter(Boolean));
+  } catch (err) {
+    console.error("Error fetching all products:", err.message);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
+};
+
+
+export const DatafromvedantAPI = async(req,res)=>{
+ try {
+    const {data} = await axios.get("https://esp32-nodeserver.onrender.com/data")
+  console.log(data)
+  res.json({
+    dataFromPolawar:data
+  })
+ } catch (error) {
+    res.json({
+      success:false,
+      message:"wifi is off"
+    })
+ }
+}
