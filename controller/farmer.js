@@ -167,7 +167,7 @@ export const allproductes = async (req, res) => {
       `https://emerald-lazy-moose-425.mypinata.cloud/ipfs/${randomItem.ipfs_pin_hash}`
     );
 
-    res.json({ ...data, ipfsHash: randomItem.ipfs_pin_hash });
+    res.json([{ ...data, ipfsHash: randomItem.ipfs_pin_hash }]);
   } catch (err) {
     console.error("Error fetching product:", err.message);
     res.status(500).json({ error: "Failed to fetch product" });
@@ -188,6 +188,7 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
 
