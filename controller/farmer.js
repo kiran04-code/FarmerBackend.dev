@@ -138,16 +138,13 @@ export const fetchProducts = async (req, res) => {
 
 
 export const allproductes = async (req, res) => {
-  try {
-    const metadataFilter = {
-      type: { value: "product", op: "eq" }, // fetch products
-    };
-
-    const encodedFilter = encodeURIComponent(JSON.stringify(metadataFilter));
-    const limit = 1; // only fetch 1 product
-
+    try {
+    // Fetch first 100 pinned products metadata only
+    const metadataFilter = { type: { value: "product", op: "eq" } };
     const response = await axios.get(
-      `https://api.pinata.cloud/data/pinList?status=pinned&limit=${limit}&metadata[keyvalues]=${encodedFilter}`,
+      `https://api.pinata.cloud/data/pinList?status=pinned&limit=100&metadata[keyvalues]=${encodeURIComponent(
+        JSON.stringify(metadataFilter)
+      )}`,
       {
         headers: {
           pinata_api_key: "9ee892bfc12b953147be",
@@ -156,18 +153,21 @@ export const allproductes = async (req, res) => {
       }
     );
 
-    const firstItem = response.data.rows[0];
+    const pinnedItems = response.data.rows;
 
-    if (!firstItem) {
+    if (!pinnedItems.length) {
       return res.json({ message: "No products found" });
     }
 
-    // Fetch actual JSON from IPFS
+    // Pick a random item
+    const randomItem = pinnedItems[Math.floor(Math.random() * pinnedItems.length)];
+
+    // Fetch its JSON content from IPFS
     const { data } = await axios.get(
-      `https://gateway.pinata.cloud/ipfs/${firstItem.ipfs_pin_hash}`
+      `https://emerald-lazy-moose-425.mypinata.cloud/ipfs/${randomItem.ipfs_pin_hash}`
     );
 
-    res.json({ ...data, ipfsHash: firstItem.ipfs_pin_hash });
+    res.json({ ...data, ipfsHash: randomItem.ipfs_pin_hash });
   } catch (err) {
     console.error("Error fetching product:", err.message);
     res.status(500).json({ error: "Failed to fetch product" });
@@ -188,6 +188,7 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
 
