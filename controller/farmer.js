@@ -134,42 +134,59 @@ export const fetchProducts = async (req, res) => {
 
 
 
-
 export const allproductes = async (req, res) => {
   try {
+    // Step 1: Fetch all pins with type=product
     const response = await axios.get(
-      'https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={"value":"product","op":"eq"}',
+      "https://api.pinata.cloud/data/pinList?status=pinned&limit=100&metadata[keyvalues][type]={" +
+        '"value":"product","op":"eq"}',
       {
         headers: {
           pinata_api_key: "9ee892bfc12b953147be",
-          pinata_secret_api_key: "c85fc4ba88949c3302c358f04734f9b51b2c971f1de682e0f90304eb6a8a01d3",
+          pinata_secret_api_key:
+            "c85fc4ba88949c3302c358f04734f9b51b2c971f1de682e0f90304eb6a8a01d3",
         },
       }
     );
 
-    const pinnedJSONs = response.data.rows;
+    const pinnedJSONs = response.data.rows || [];
+    console.log(`Fetched ${pinnedJSONs.length} pinned products`);
 
-    const products = await Promise.all(
-      pinnedJSONs.map(async (item) => {
-        try {
-          const { data } = await axios.get(
-            `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`
-          );
-          return { ...data, ipfsHash: item.ipfs_pin_hash };
-        } catch (err) {
-          console.log("Error fetching IPFS JSON:", err.message);
-          return null;
-        }
-      })
-    );
+    // Step 2: Fetch JSON data from IPFS with rate limiting
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    res.json(products.filter(Boolean));
+    const products = [];
+
+    for (const item of pinnedJSONs) {
+      try {
+        const { data } = await axios.get(
+          `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`
+        );
+        products.push({ ...data, ipfsHash: item.ipfs_pin_hash });
+
+        // Small delay to avoid 429 rate limit errors
+        await delay(300);
+      } catch (err) {
+        console.log("Error fetching IPFS JSON:", err.message);
+      }
+    }
+
+    // Step 3: Respond once, after all fetches
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products,
+    });
   } catch (err) {
     console.error("Error fetching all products:", err.message);
-    res.status(500).json({ error: "Failed to fetch products" });
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch products",
+      });
+    }
   }
 };
-
 
 export const DatafromvedantAPI = async(req,res)=>{
  try {
@@ -184,4 +201,5 @@ export const DatafromvedantAPI = async(req,res)=>{
       message:"wifi is off"
     })
  }
+
 }
