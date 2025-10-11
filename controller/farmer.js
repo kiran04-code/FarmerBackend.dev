@@ -135,32 +135,37 @@ export const fetchProducts = async (req, res) => {
 
 
 export const allproductes = async (req, res) => {
-   try {
+  try {
+     // Fetch only ONE pinned product from Pinata
     const response = await axios.get(
-      "https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={\"value\":\"product\",\"op\":\"eq\"}&pageLimit=1",
+      'https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={"value":"product","op":"eq"}&pageLimit=1',
       {
         headers: {
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI3MDBkYmZkZi1jNTE0LTQxMTYtODAxMi1iY2Q1YTQ1MTZiNzYiLCJlbWFpbCI6ImtpcmFuLnJhdGhvZDI0QHZpdC5lZHUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiNTdlYTBjNjQxOGJkNGNjMTRmZGYiLCJzY29wZWRLZXlTZWNyZXQiOiI2ZDMxM2NiYzYwOWYwNzNmZWEyZmFmNDNmZjNkNGQ5MjdkZDFhODJmNDRjZGZlN2EzODM4Y2M3OTAzNGUzY2UxIiwiZXhwIjoxNzkxNzIwMTQyfQ.CHkULefgJ6lq_-lCN3s7bEg95Z4lMePSoVSDFLq73ck`
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI3MDBkYmZkZi1jNTE0LTQxMTYtODAxMi1iY2Q1YTQ1MTZiNzYiLCJlbWFpbCI6ImtpcmFuLnJhdGhvZDI0QHZpdC5lZHUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiNTdlYTBjNjQxOGJkNGNjMTRmZGYiLCJzY29wZWRLZXlTZWNyZXQiOiI2ZDMxM2NiYzYwOWYwNzNmZWEyZmFmNDNmZjNkNGQ5MjdkZDFhODJmNDRjZGZlN2EzODM4Y2M3OTAzNGUzY2UxIiwiZXhwIjoxNzkxNzIwMTQyfQ.CHkULefgJ6lq_-lCN3s7bEg95Z4lMePSoVSDFLq73ck`,
         },
       }
     );
 
-    const products = response.data.rows;
+    const pinnedJSONs = response.data.rows;
 
-    if (products.length === 0) {
-      return res.status(404).json({ message: "No product found" });
+    if (pinnedJSONs.length === 0) {
+      return res.status(404).json({ error: "No products found" });
     }
 
-    // Only one product (the first one)
-    const singleProduct = products[0];
+    // Fetch the JSON from IPFS for the first product only
+    const item = pinnedJSONs[0];
 
-    res.json({
-      success: true,
-      data: singleProduct,
-    });
-  } catch (error) {
-    console.error("Error fetching product:", error.message);
-    res.status(500).json({ error: "Failed to fetch product" });
+    const { data } = await axios.get(
+      `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`
+    );
+
+    // Keep same structure as before
+    const product = { ...data, ipfsHash: item.ipfs_pin_hash };
+
+    res.json([product]);
+  } catch (err) {
+    console.error("Error fetching all products:", err.message);
+    res.status(500).json({ error: "Failed to fetch products" });
   }
 };
 
@@ -179,5 +184,6 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
