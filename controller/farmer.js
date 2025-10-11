@@ -137,11 +137,13 @@ export const fetchProducts = async (req, res) => {
 
 export const allproductes = async (req, res) => {
   try {
+    // ✅ Fetch pinned products from Pinata (limit 1)
+    const filter = encodeURIComponent(JSON.stringify({ value: "product", op: "eq" }));
     const response = await axios.get(
-      "https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={\"value\":\"product\",\"op\":\"eq\"}",
+      `https://api.pinata.cloud/data/pinList?status=pinned&pageLimit=1&metadata[keyvalues][type]=${filter}`,
       {
         headers: {
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI3MDBkYmZkZi1jNTE0LTQxMTYtODAxMi1iY2Q1YTQ1MTZiNzYiLCJlbWFpbCI6ImtpcmFuLnJhdGhvZDI0QHZpdC5lZHUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiNTdlYTBjNjQxOGJkNGNjMTRmZGYiLCJzY29wZWRLZXlTZWNyZXQiOiI2ZDMxM2NiYzYwOWYwNzNmZWEyZmFmNDNmZjNkNGQ5MjdkZDFhODJmNDRjZGZlN2EzODM4Y2M3OTAzNGUzY2UxIiwiZXhwIjoxNzkxNzIwMTQyfQ.CHkULefgJ6lq_-lCN3s7bEg95Z4lMePSoVSDFLq73ck`
+          Authorization: `Bearer ${process.env.PINATA_JWT}`, // keep in .env
         },
       }
     );
@@ -152,48 +154,38 @@ export const allproductes = async (req, res) => {
       return res.status(404).json({ message: "No products found" });
     }
 
-    // Fetch all product details in parallel
-    const allProductDetails = await Promise.all(productsList.map(async (product) => {
-      try {
-        const ipfsHash = product.ipfs_pin_hash;
-        const { data: ipfsData } = await axios.get(`https://gateway.pinata.cloud/ipfs/${ipfsHash}`);
+    const product = productsList[0]; // take only the first product
+    const ipfsHash = product.ipfs_pin_hash;
 
-        // Map only the fields you want
-        return {
-          productId: ipfsData.productId || "",
-          farmerId: ipfsData.farmerId || "",
-          productName: ipfsData.productName || "",
-          location: ipfsData.location || "",
-          temperature: ipfsData.temperature || "",
-          humidity: ipfsData.humidity || "",
-          soilMoisture: ipfsData.soilMoisture || "",
-          images: ipfsData.images || [],
-          type: ipfsData.type || "product",
-          ipfsHash, // optional, keep for reference
-        };
+    // Fetch IPFS data for this product
+    const { data: ipfsData } = await axios.get(`https://gateway.pinata.cloud/ipfs/${ipfsHash}`);
 
-      } catch (loopError) {
-        console.error(`Failed to fetch IPFS hash ${product.ipfs_pin_hash}:`, loopError.message);
-        return null; // Skip failed items
-      }
-    }));
-
-    // Filter out any null items (failed fetches)
-    const finalProducts = allProductDetails.filter(item => item !== null);
+    // Return only the fields you want
+    const finalProduct = {
+      productId: ipfsData.productId || "",
+      farmerId: ipfsData.farmerId || "",
+      productName: ipfsData.productName || "",
+      location: ipfsData.location || "",
+      temperature: ipfsData.temperature || "",
+      humidity: ipfsData.humidity || "",
+      soilMoisture: ipfsData.soilMoisture || "",
+      images: ipfsData.images || [],
+      type: ipfsData.type || "product",
+    };
 
     res.json({
       success: true,
-      count: finalProducts.length,
-      data: finalProducts,
+      count: 1,
+      data: [finalProduct],
     });
 
   } catch (error) {
-    console.error("Error fetching product list:", error.message);
+    console.error("Error fetching product:", error.message);
     if (!res.headersSent) {
-      res.status(500).json({ error: "Failed to fetch products" });
+      res.status(500).json({ error: "Failed to fetch product" });
     }
   }
-};                 
+};
 export const DatafromvedantAPI = async(req,res)=>{
  try {
     const {data} = await axios.get("https://esp32-nodeserver.onrender.com/data")
@@ -209,6 +201,7 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
 
