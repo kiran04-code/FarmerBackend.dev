@@ -135,8 +135,9 @@ export const fetchProducts = async (req, res) => {
 
 
 export const allproductes = async (req, res) => {
-  try {
-     // Fetch only ONE pinned product from Pinata
+try {
+    console.log("➡️ Fetching single product from Pinata...");
+
     const response = await axios.get(
       'https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={"value":"product","op":"eq"}&pageLimit=1',
       {
@@ -146,25 +147,31 @@ export const allproductes = async (req, res) => {
       }
     );
 
+    console.log("✅ Pinata API Response:", response.data);
+
     const pinnedJSONs = response.data.rows;
 
-    if (pinnedJSONs.length === 0) {
+    if (!pinnedJSONs || pinnedJSONs.length === 0) {
+      console.log("⚠️ No product pins found.");
       return res.status(404).json({ error: "No products found" });
     }
 
-    // Fetch the JSON from IPFS for the first product only
     const item = pinnedJSONs[0];
+    console.log("🎯 Fetching IPFS file:", item.ipfs_pin_hash);
 
     const { data } = await axios.get(
       `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`
     );
 
-    // Keep same structure as before
     const product = { ...data, ipfsHash: item.ipfs_pin_hash };
+    console.log("✅ Product fetched successfully!");
 
-    res.json([product]);
+    res.json([product]); // returning as array for consistency
   } catch (err) {
-    console.error("Error fetching all products:", err.message);
+    console.error("❌ Error fetching single product:", err.message);
+    if (err.response) {
+      console.error("📡 Pinata error response:", err.response.data);
+    }
     res.status(500).json({ error: "Failed to fetch products" });
   }
 };
@@ -184,6 +191,7 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
 
