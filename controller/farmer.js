@@ -134,8 +134,10 @@ export const fetchProducts = async (req, res) => {
 
 
 
+
 export const allproductes = async (req, res) => {
-    try {
+  try {
+    // 1️⃣ Fetch pinned products from Pinata
     const response = await axios.get(
       "https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={\"value\":\"product\",\"op\":\"eq\"}&pageLimit=1",
       {
@@ -151,12 +153,18 @@ export const allproductes = async (req, res) => {
       return res.status(404).json({ message: "No product found" });
     }
 
-    // Only one product (the first one)
+    // 2️⃣ Get first product's IPFS hash
     const singleProduct = products[0];
+    const ipfsHash = singleProduct.ipfs_pin_hash;
 
+    // 3️⃣ Fetch full JSON from IPFS
+    const { data } = await axios.get(`https://gateway.pinata.cloud/ipfs/${ipfsHash}`);
+
+    // 4️⃣ Return full data including IPFS content
     res.json({
       success: true,
-      data: singleProduct,
+      data: data, // This includes productId, farmerId, images, temperature, etc.
+      ipfsMetadata: singleProduct // Optional: includes Pinata metadata like size, date_pinned
     });
   } catch (error) {
     console.error("Error fetching product:", error.message);
@@ -179,6 +187,7 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
 
