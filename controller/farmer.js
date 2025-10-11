@@ -135,6 +135,7 @@ export const fetchProducts = async (req, res) => {
 
 
 export const allproductes = async (req, res) => {
+    try {
     const response = await axios.get(
       "https://api.pinata.cloud/data/pinList?status=pinned&metadata[keyvalues][type]={\"value\":\"product\",\"op\":\"eq\"}&pageLimit=1",
       {
@@ -178,6 +179,7 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
 
