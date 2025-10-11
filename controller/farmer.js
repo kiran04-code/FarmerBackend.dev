@@ -172,11 +172,7 @@ export const allproductes = async (req, res) => {
     }
 
     // Step 3: Respond once, after all fetches
-    res.status(200).json({
-      success: true,
-      count: products.length,
-      products,
-    });
+   res.json(products.filter(Boolean));
   } catch (err) {
     console.error("Error fetching all products:", err.message);
     if (!res.headersSent) {
@@ -203,3 +199,4 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
