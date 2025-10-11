@@ -11,7 +11,23 @@ config();
 const app = express();
 
 // Middlewares
-app.use(cors({ origin: "*" }));
+const allowedOrigins = [
+  "http://localhost:8080",
+  "https://labbackend-2d5l.onrender.com",
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // React Native requests may have no origin
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  }
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -49,3 +65,4 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`Local Server is Running on Port: http://localhost:${PORT}`);
   console.log(`Live Server run : ${process.env.DEPLOYED_URL}`);
 });
+
