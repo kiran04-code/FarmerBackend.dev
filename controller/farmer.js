@@ -136,59 +136,41 @@ export const fetchProducts = async (req, res) => {
 
 
 
+
 export const allproductes = async (req, res) => {
   try {
     const metadataFilter = {
-      type: { value: "product", op: "eq" }, // fetch all products
+      type: { value: "product", op: "eq" }, // fetch products
     };
 
     const encodedFilter = encodeURIComponent(JSON.stringify(metadataFilter));
-    let allPinnedItems = [];
-    let pageOffset = 0;
-    const limit = 100; // maximum per Pinata API
+    const limit = 1; // only fetch 1 product
 
-    // Fetch all pages
-    while (true) {
-      const response = await axios.get(
-        `https://api.pinata.cloud/data/pinList?status=pinned&limit=${limit}&offset=${pageOffset}&metadata[keyvalues]=${encodedFilter}`,
-        {
-          headers: {
-            pinata_api_key: "9ee892bfc12b953147be",
-            pinata_secret_api_key: "c85fc4ba88949c3302c358f04734f9b51b2c971f1de682e0f90304eb6a8a01d3",
-          },
-        }
-      );
-
-      const pinnedItems = response.data.rows;
-      allPinnedItems = allPinnedItems.concat(pinnedItems);
-
-      // If less than limit, no more pages
-      if (pinnedItems.length < limit) break;
-      pageOffset += limit;
-    }
-
-    console.log("Total pinned items fetched:", allPinnedItems.length);
-
-    // Fetch actual JSON from IPFS
-    const products = await Promise.all(
-      allPinnedItems.map(async (item) => {
-        try {
-          const { data } = await axios.get(
-            `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`
-          );
-          return { ...data, ipfsHash: item.ipfs_pin_hash };
-        } catch (err) {
-          console.error("Error fetching IPFS JSON:", err.message);
-          return null;
-        }
-      })
+    const response = await axios.get(
+      `https://api.pinata.cloud/data/pinList?status=pinned&limit=${limit}&metadata[keyvalues]=${encodedFilter}`,
+      {
+        headers: {
+          pinata_api_key: "9ee892bfc12b953147be",
+          pinata_secret_api_key: "c85fc4ba88949c3302c358f04734f9b51b2c971f1de682e0f90304eb6a8a01d3",
+        },
+      }
     );
 
-    // Return only valid products
-    res.json(products.filter(Boolean));
+    const firstItem = response.data.rows[0];
+
+    if (!firstItem) {
+      return res.json({ message: "No products found" });
+    }
+
+    // Fetch actual JSON from IPFS
+    const { data } = await axios.get(
+      `https://gateway.pinata.cloud/ipfs/${firstItem.ipfs_pin_hash}`
+    );
+
+    res.json({ ...data, ipfsHash: firstItem.ipfs_pin_hash });
   } catch (err) {
-    console.error("Error fetching products:", err.message);
-    res.status(500).json({ error: "Failed to fetch products" });
+    console.error("Error fetching product:", err.message);
+    res.status(500).json({ error: "Failed to fetch product" });
   }
 };
 export const DatafromvedantAPI = async(req,res)=>{
@@ -206,6 +188,7 @@ export const DatafromvedantAPI = async(req,res)=>{
  }
 
 }
+
 
 
 
